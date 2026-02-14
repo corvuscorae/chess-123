@@ -108,7 +108,8 @@ void Chess::FENtoBoard(const std::string& fen) {
 
         // place piece
         Bit* piece = PieceForPlayer(player, guy);   // make piece
-        int notation = (player == BLACK) ? guy + 128 : guy; // this feels hacky // TODO: fix?
+        piece->setParent(square);
+        int notation = (player == BLACK) ? (guy + 128) : guy; // this feels hacky // TODO: fix?
         piece->setGameTag(notation);              // set tag to piece notation
         piece->setPosition(square->getPosition());  // put it on the board
         square->setBit(piece);
