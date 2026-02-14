@@ -45,5 +45,9 @@ private:
     void FENtoBoard(const std::string& fen);
     char pieceNotation(int x, int y) const;
 
+    // player colors
+    const int WHITE = 0;
+    const int BLACK = 1;
+
     Grid* _grid;
 };
