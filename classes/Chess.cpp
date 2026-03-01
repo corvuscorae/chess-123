@@ -270,7 +270,16 @@ std::vector<BitMove> Chess::generateAllMoves(){
     int bitIndex = _currentPlayer == WHITE ? W_PAWNS : B_PAWNS;
     int oppBitIndex = _currentPlayer == BLACK ? W_PAWNS : B_PAWNS;
 
+    // knights
     generateKnightMoves(moves, _bitboards[W_KNIGHTS + bitIndex], ~_bitboards[OCCUPANCY].getData());
+
+    // bishops
+    uint64_t bishopBoard = _bitboards[W_BISHOPS + bitIndex].getData();
+    do{
+        int sq = bitScanForward(bishopBoard);
+        generateBishopMoves(state.c_str(), moves, sq / 8, sq & 7);
+        bishopBoard &= (bishopBoard - 1);
+    } while(bishopBoard);
 
     return moves;
 }
@@ -334,4 +343,48 @@ BitboardElement Chess::generateKnightMoveBitboard(int square){
     }
 
     return bb;
+}
+
+
+void Chess::generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col){
+    static const std::vector<std::pair<int, int>> diagonals = {
+        {1,1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
+    generateLinearMoves(state, moves, row, col, diagonals);
+}
+
+void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions){
+    for( auto &dir : directions){
+        int currRow = row + dir.first;
+        int currCol = col + dir.second;
+
+        while(currRow >= 0 && currRow < 8 && currCol >= 0 && currCol < 8){
+            if(pieceNotation(currCol, currRow) != '0'){
+                addMoveIfValid(state, moves, row, col, currRow, currCol);
+                break;
+            }
+
+            addMoveIfValid(state, moves, row, col, currRow, currCol);
+            currRow += dir.first;
+            currCol += dir.second;
+        }
+    }
+
+}
+
+int Chess::stateColor(const char* state, int row, int col){
+    char piece = pieceNotation(col, row);
+    if(piece == '0') return 0;
+    return (piece < 'a') ? WHITE : BLACK;
+}
+
+void Chess::addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol){
+    if(toRow >= 0 && toRow < 8 && toCol >= 0 && toCol < 8){
+        int fromColor = stateColor(state, fromRow, fromCol);
+        int toColor = stateColor(state, toRow, toCol);
+        if(fromColor != toColor){
+            moves.emplace_back(fromRow*8+fromCol, toRow*8+toCol, Knight);
+        }
+    }
 }

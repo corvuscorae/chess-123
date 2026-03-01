@@ -58,13 +58,15 @@ private:
     char pieceNotation(int x, int y) const;
 
     // player colors
+    int stateColor(const char* state, int row, int col);
     int _currentPlayer;
-
     Grid* _grid;
 
     // generating moves
     std::vector<BitMove> generateAllMoves();
     void bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst);
+    void addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol);
+
 
     // knights
     BitboardElement generateKnightMoveBitboard(int square);
@@ -73,10 +75,21 @@ private:
 
     // bishops
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
+    void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions);
+
     
     std::vector<BitMove> _moves;
     BitboardElement _knightBitboards[64];
     BitboardElement _bitboards[e_numBitboards];
     int _bitboardLookup[128];
 
+    inline int bitScanForward(uint64_t bb) const {
+        #if defined(_MSC_VER) && !defined(__clang__)
+                unsigned long index;
+                _BitScanForward64(&index, bb);
+                return index;
+        #else
+                return __builtin_ffsll(bb) - 1;
+        #endif
+    };
 };

@@ -67,15 +67,14 @@ class BitboardElement {
 
 private:
     uint64_t    _data;
-
     inline int bitScanForward(uint64_t bb) const {
-#if defined(_MSC_VER) && !defined(__clang__)
-        unsigned long index;
-        _BitScanForward64(&index, bb);
-        return index;
-#else
-        return __builtin_ffsll(bb) - 1;
-#endif
+        #if defined(_MSC_VER) && !defined(__clang__)
+                unsigned long index;
+                _BitScanForward64(&index, bb);
+                return index;
+        #else
+                return __builtin_ffsll(bb) - 1;
+        #endif
     };
 
 };
