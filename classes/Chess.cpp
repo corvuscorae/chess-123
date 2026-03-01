@@ -270,6 +270,11 @@ std::vector<BitMove> Chess::generateAllMoves(){
     int bitIndex = _currentPlayer == WHITE ? W_PAWNS : B_PAWNS;
     int oppBitIndex = _currentPlayer == BLACK ? W_PAWNS : B_PAWNS;
 
+    int enemyBoardIndex = _currentPlayer == WHITE ? B_ALL : W_ALL;
+
+    // pawns
+    generatePawnMoves(moves, _bitboards[W_PAWNS + bitIndex], ~_bitboards[OCCUPANCY].getData(), _bitboards[enemyBoardIndex], _currentPlayer);
+
     // knights
     generateKnightMoves(moves, _bitboards[W_KNIGHTS + bitIndex], ~_bitboards[OCCUPANCY].getData());
 
@@ -387,4 +392,53 @@ void Chess::addMoveIfValid(const char* state, std::vector<BitMove>& moves, int f
             moves.emplace_back(fromRow*8+fromCol, toRow*8+toCol, Knight);
         }
     }
+}
+
+
+// TODO: replace ternaries with template (isWhite)
+void Chess::generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char color){
+    if(pawns.getData() == 0){
+        return;
+    }
+
+    // constants for ranks and files
+    constexpr uint64_t notAFile (0xFEFEFEFEFEFEFEFEULL);
+    constexpr uint64_t notHFile (0x7F7F7F7F7F7F7F7FULL);
+    constexpr uint64_t rank3    (0x0000000000FF0000ULL);
+    constexpr uint64_t rank6    (0x0000FF0000000000ULL);
+
+    BitboardElement demoRight(notAFile);
+    BitboardElement demoLeft(notHFile);
+
+    BitboardElement singleMoves = (color == WHITE) ? 
+        (pawns.getData() << 8) & empty.getData() :
+        (pawns.getData() >> 8) & empty.getData() ;
+    BitboardElement doubleMoves = (color == WHITE) ? 
+        ((singleMoves.getData() & rank3) << 8) & empty.getData() :
+        ((singleMoves.getData() & rank6) >> 8) & empty.getData() ;
+
+    BitboardElement capturesLeft = (color == WHITE) ? 
+        ((pawns.getData() & notHFile) << 7) & enemies.getData() :
+        ((pawns.getData() & notAFile) >> 9) & enemies.getData() ;
+    BitboardElement capturesRight = (color == WHITE) ? 
+        ((pawns.getData() & notAFile) << 9) & enemies.getData() :
+        ((pawns.getData() & notHFile) >> 7) & enemies.getData() ;
+
+    int forwardSingleShift  = (color == WHITE) ? 8 : -8;
+    int forwardDoubleShift  = (color == WHITE) ? 16 : -16;
+    int captureLeftShift    = (color == WHITE) ? 7 : -9;
+    int captureRightShift   = (color == WHITE) ? 9 : -7;
+
+    addPawnBitboardMovesToList(moves, singleMoves, forwardSingleShift);
+    addPawnBitboardMovesToList(moves, doubleMoves, forwardDoubleShift);
+    addPawnBitboardMovesToList(moves, capturesLeft, captureLeftShift);
+    addPawnBitboardMovesToList(moves, capturesRight, captureRightShift);
+}
+
+void Chess::addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitboardElement bitboard, const int shift){
+    if(bitboard.getData() == 0) return;
+    bitboard.forEachBit([&](int to){
+        int from = to - shift;
+        moves.emplace_back(from, to, Pawn);
+    });
 }

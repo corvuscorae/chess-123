@@ -74,10 +74,15 @@ private:
     void generateKnightMoves(std::vector<BitMove>& moves, BitboardElement knights, uint64_t occupancy);
 
     // bishops
+    // TODO: improve
+    // use templates?
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions);
 
-    
+    // pawns
+    void generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char col);
+    void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitboardElement bitboard, const int shift);
+
     std::vector<BitMove> _moves;
     BitboardElement _knightBitboards[64];
     BitboardElement _bitboards[e_numBitboards];
