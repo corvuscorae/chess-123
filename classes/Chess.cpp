@@ -278,13 +278,13 @@ std::vector<BitMove> Chess::generateAllMoves(){
     // knights
     generateKnightMoves(moves, _bitboards[W_KNIGHTS + bitIndex], ~_bitboards[OCCUPANCY].getData());
 
-    // bishops
-    uint64_t bishopBoard = _bitboards[W_BISHOPS + bitIndex].getData();
-    do{
-        int sq = bitScanForward(bishopBoard);
-        generateBishopMoves(state.c_str(), moves, sq / 8, sq & 7);
-        bishopBoard &= (bishopBoard - 1);
-    } while(bishopBoard);
+    // kings
+    uint64_t kingBoard = _bitboards[W_KING + bitIndex].getData();
+    while(kingBoard){
+        int sq = bitScanForward(kingBoard);
+        generateKingMoves(state.c_str(), moves, sq / 8, sq & 7);
+        kingBoard &= (kingBoard - 1);
+    }
 
     return moves;
 }
@@ -380,7 +380,7 @@ void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, 
 
 int Chess::stateColor(const char* state, int row, int col){
     char piece = pieceNotation(col, row);
-    if(piece == '0') return 0;
+    if(piece == '0') return -2;
     return (piece < 'a') ? WHITE : BLACK;
 }
 
@@ -441,4 +441,19 @@ void Chess::addPawnBitboardMovesToList(std::vector<BitMove>& moves, const Bitboa
         int from = to - shift;
         moves.emplace_back(from, to, Pawn);
     });
+}
+
+void Chess::generateKingMoves(const char *state, std::vector<BitMove> &moves, int row, int col){
+    std::vector<std::pair<int, int>> directions = {
+        {1,0}, {-1,0}, {0,1}, {0, -1}, {1,1}, {1,-1}, {-1,1}, {-1,-1}
+    };
+
+    for(auto &dir : directions){
+        int newRow = row + dir.first;
+        int newCol = col + dir.second;
+
+        if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8){
+            addMoveIfValid(state, moves, row, col, newRow, newCol);
+        }
+    }
 }

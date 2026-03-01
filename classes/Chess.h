@@ -83,6 +83,9 @@ private:
     void generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char col);
     void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitboardElement bitboard, const int shift);
 
+    // kings
+    void generateKingMoves(const char *state, std::vector<BitMove> &moves, int row, int col);
+
     std::vector<BitMove> _moves;
     BitboardElement _knightBitboards[64];
     BitboardElement _bitboards[e_numBitboards];
