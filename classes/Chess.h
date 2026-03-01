@@ -2,18 +2,30 @@
 
 #include "Game.h"
 #include "Grid.h"
+#include "Bitboard.h"
 
 constexpr int pieceSize = 80;
+constexpr int WHITE = 0;
+constexpr int BLACK = 1;
 
-enum ChessPiece
-{
-    NoPiece,
-    Pawn,
-    Knight,
-    Bishop,
-    Rook,
-    Queen,
-    King
+enum AllBitBoards {
+    W_PAWNS,
+    W_KNIGHTS,
+    W_BISHOPS,
+    W_ROOKS,
+    W_QUEENS,
+    W_KING,
+    B_PAWNS,
+    B_KNIGHTS,
+    B_BISHOPS,
+    B_ROOKS,
+    B_QUEENS,
+    B_KING,
+    W_ALL,
+    B_ALL,
+    OCCUPANCY,
+    EMPTY_SQUARES,
+    e_numBitboards
 };
 
 class Chess : public Game
@@ -46,8 +58,25 @@ private:
     char pieceNotation(int x, int y) const;
 
     // player colors
-    const int WHITE = 0;
-    const int BLACK = 1;
+    int _currentPlayer;
 
     Grid* _grid;
+
+    // generating moves
+    std::vector<BitMove> generateAllMoves();
+    void bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst);
+
+    // knights
+    BitboardElement generateKnightMoveBitboard(int square);
+    void generateKnightMoves(std::vector<BitMove>& moves, std::string &state);
+    void generateKnightMoves(std::vector<BitMove>& moves, BitboardElement knights, uint64_t occupancy);
+
+    // bishops
+    void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
+    
+    std::vector<BitMove> _moves;
+    BitboardElement _knightBitboards[64];
+    BitboardElement _bitboards[e_numBitboards];
+    int _bitboardLookup[128];
+
 };
