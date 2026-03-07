@@ -302,6 +302,14 @@ std::vector<BitMove> Chess::generateAllMoves(){
         rookBoard &= (rookBoard - 1);
     } while(rookBoard);
 
+    // queens
+    uint64_t queenBoard = _bitboards[W_QUEENS + bitIndex].getData();
+    do{
+        int sq = bitScanForward(queenBoard);
+        generateQueenMoves(state.c_str(), moves, sq / 8, sq & 7);
+        queenBoard &= (queenBoard - 1);
+    } while(queenBoard);
+
     return moves;
 }
 
@@ -381,6 +389,15 @@ void Chess::generateRookMoves(const char* state, std::vector<BitMove>& moves, in
     };
 
     generateLinearMoves(state, moves, row, col, orthogonals);
+}
+
+void Chess::generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col){
+    static const std::vector<std::pair<int, int>> all_dirs = {
+        {1,0}, {-1, 0}, {0, 1}, {0, -1},
+        {1,1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
+    generateLinearMoves(state, moves, row, col, all_dirs);
 }
 
 void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions){

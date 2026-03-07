@@ -78,6 +78,7 @@ private:
     // use templates?
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
+    void generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions);
 
     // pawns
