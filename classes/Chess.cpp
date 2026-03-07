@@ -286,6 +286,22 @@ std::vector<BitMove> Chess::generateAllMoves(){
         kingBoard &= (kingBoard - 1);
     }
 
+    // bishops
+    uint64_t bishopBoard = _bitboards[W_BISHOPS + bitIndex].getData();
+    do{
+        int sq = bitScanForward(bishopBoard);
+        generateBishopMoves(state.c_str(), moves, sq / 8, sq & 7);
+        bishopBoard &= (bishopBoard - 1);
+    } while(bishopBoard);
+
+    // rooks
+    uint64_t rookBoard = _bitboards[W_ROOKS + bitIndex].getData();
+    do{
+        int sq = bitScanForward(rookBoard);
+        generateRookMoves(state.c_str(), moves, sq / 8, sq & 7);
+        rookBoard &= (rookBoard - 1);
+    } while(rookBoard);
+
     return moves;
 }
 
@@ -357,6 +373,14 @@ void Chess::generateBishopMoves(const char* state, std::vector<BitMove>& moves, 
     };
 
     generateLinearMoves(state, moves, row, col, diagonals);
+}
+
+void Chess::generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col){
+    static const std::vector<std::pair<int, int>> orthogonals = {
+        {1,0}, {-1, 0}, {0, 1}, {0, -1}
+    };
+
+    generateLinearMoves(state, moves, row, col, orthogonals);
 }
 
 void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions){
