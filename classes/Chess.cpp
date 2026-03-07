@@ -288,27 +288,27 @@ std::vector<BitMove> Chess::generateAllMoves(){
 
     // bishops
     uint64_t bishopBoard = _bitboards[W_BISHOPS + bitIndex].getData();
-    do{
+    while(bishopBoard){
         int sq = bitScanForward(bishopBoard);
         generateBishopMoves(state.c_str(), moves, sq / 8, sq & 7);
         bishopBoard &= (bishopBoard - 1);
-    } while(bishopBoard);
+    } 
 
     // rooks
     uint64_t rookBoard = _bitboards[W_ROOKS + bitIndex].getData();
-    do{
+    while(rookBoard){
         int sq = bitScanForward(rookBoard);
         generateRookMoves(state.c_str(), moves, sq / 8, sq & 7);
         rookBoard &= (rookBoard - 1);
-    } while(rookBoard);
+    } 
 
     // queens
     uint64_t queenBoard = _bitboards[W_QUEENS + bitIndex].getData();
-    do{
+    while(queenBoard){
         int sq = bitScanForward(queenBoard);
         generateQueenMoves(state.c_str(), moves, sq / 8, sq & 7);
         queenBoard &= (queenBoard - 1);
-    } while(queenBoard);
+    } 
 
     return moves;
 }

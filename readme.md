@@ -9,3 +9,4 @@ I compared the assembly code in the piece checking in `FENtoBoard()` in two diff
 Full disclosure: last week, I had playtests in 171, so I didn't have a lot of bandwidth to work on the first move sets (pawns, knights, kings). I followed along with lecture recordings. I will hopefully have time soon to watch Sebastian Lague's chess videos and maybe improve my code. I made some notes with comments in areas where I plan to replace stuff with templates so my code is faster.
 
 ![Initial moves for pawns, knights, and kings totaling to 20](./docs/pawnsknightkings_initmoves.png)
+![Bishops, rooks, queens too](./docs/bishopsrooksqueens.png)
