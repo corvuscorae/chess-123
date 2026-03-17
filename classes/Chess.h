@@ -87,6 +87,8 @@ private:
 
     // kings
     void generateKingMoves(const char *state, std::vector<BitMove> &moves, int row, int col);
+    bool isKingInCheck(int player);
+
 
     std::vector<BitMove> _moves;
     BitboardElement _knightBitboards[64];

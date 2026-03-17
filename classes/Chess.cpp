@@ -202,13 +202,49 @@ Player* Chess::ownerAt(int x, int y) const
     return square->bit()->getOwner();
 }
 
-Player* Chess::checkForWinner()
-{
+// Chess.cpp
+// TODO: switch to paranoid king?
+bool Chess::isKingInCheck(int player) {
+    // find the king index
+    char kingChar = (player == WHITE) ? 'K' : 'k';
+    std::string state = stateString();
+    int kingIndex = -1;
+    for (int i = 0; i < 64; i++) {
+        if (state[i] == kingChar) {
+            kingIndex = i;
+            break;
+        }
+    }
+    if (kingIndex == -1) return false; // shouldnt happen
+
+    // switch to opponent and generate their moves
+    int savedPlayer = _currentPlayer;
+    _currentPlayer = (player == WHITE) ? BLACK : WHITE;
+    std::vector<BitMove> opponentMoves = generateAllMoves();
+    _currentPlayer = savedPlayer;   // switch back
+
+    // if any opponent move lands on the king's square, king is in check
+    for (auto& move : opponentMoves) {
+        if (move.to == kingIndex) return true;
+    }
+    return false;
+}
+
+Player* Chess::checkForWinner() {
+    // current player has no moves and is in check --> checkmate
+    if (_moves.empty() || isKingInCheck(_currentPlayer)) {
+        // OTHER player wins
+        int winnerIndex = (_currentPlayer == WHITE) ? BLACK : WHITE;
+        return getPlayerAt(winnerIndex);
+    }
     return nullptr;
 }
 
-bool Chess::checkForDraw()
-{
+bool Chess::checkForDraw() {
+    // no legal moves but king is NOT in check
+    if (_moves.empty() && !isKingInCheck(_currentPlayer)) {
+        return true;
+    }
     return false;
 }
 
