@@ -63,7 +63,8 @@ private:
     Grid* _grid;
 
     // generating moves
-    std::vector<BitMove> generateAllMoves();
+    void rebuildBitboards(const std::string& state);
+    std::vector<BitMove> generatePseudoLegalMoves(const std::string& state);
     void bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst);
     void addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol);
 

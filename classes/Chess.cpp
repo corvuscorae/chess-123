@@ -74,7 +74,7 @@ void Chess::setUpBoard()
     FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     _currentPlayer = WHITE;
-    _moves = generateAllMoves();
+    _moves = generatePseudoLegalMoves(stateString());
     startGame();
 }
 
@@ -211,7 +211,7 @@ bool Chess::isKingInCheck(int player) {
     // switch to opponent and generate their moves
     int savedPlayer = _currentPlayer;
     _currentPlayer = (player == WHITE) ? BLACK : WHITE;
-    std::vector<BitMove> opponentMoves = generateAllMoves();
+    std::vector<BitMove> opponentMoves = generatePseudoLegalMoves(state);
     _currentPlayer = savedPlayer;   // switch back
 
     // if any opponent move lands on the king's square, king is in check
@@ -276,73 +276,88 @@ void Chess::setStateString(const std::string &s)
 // MOVE GENERATIONS //
 void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst){
     _currentPlayer = (_currentPlayer == WHITE) ? BLACK : WHITE;
-    _moves = generateAllMoves();
+    _moves = generatePseudoLegalMoves(stateString());
     clearBoardHighlights();
     endTurn();
 }
 
-std::vector<BitMove> Chess::generateAllMoves(){
+std::vector<BitMove> Chess::generatePseudoLegalMoves(const std::string& state){
     std::vector<BitMove> moves;
-    moves.reserve(32);
-    std::string state = stateString();
+    moves.reserve(40);   
 
-    for(int i = 0; i < e_numBitboards; i++){
-        _bitboards[i] = 0;
-    }
+    rebuildBitboards(state);
 
-    for(int i = 0; i < 64; i++){
-        int bitIndex = _bitboardLookup[state[i]];
-        _bitboards[bitIndex] |= 1ULL << i;
-        if(state[i] != '0'){
-            _bitboards[OCCUPANCY] |= 1ULL << i;
-            _bitboards[isupper(state[i]) ? W_ALL : B_ALL] |= 1ULL << i;
-        }
-    }
+    // offsets into the bitboard array
+    int offset      = (_currentPlayer == WHITE) ? 0 : (B_PAWNS - W_PAWNS);
+    int enemyOffset = (_currentPlayer == WHITE) ? (B_PAWNS - W_PAWNS) : 0;
 
-    int bitIndex = _currentPlayer == WHITE ? W_PAWNS : B_PAWNS;
-    int oppBitIndex = _currentPlayer == BLACK ? W_PAWNS : B_PAWNS;
+    // get friendly and enemy bitboards
+    int friendlyAllIndex = (_currentPlayer == WHITE) ? W_ALL : B_ALL;
+    int enemyAllIndex    = (_currentPlayer == WHITE) ? B_ALL : W_ALL;
+    uint64_t friendlyBB = _bitboards[friendlyAllIndex].getData();
+    uint64_t enemyBB    = _bitboards[enemyAllIndex].getData();
 
-    int enemyBoardIndex = _currentPlayer == WHITE ? B_ALL : W_ALL;
+    uint64_t occupancy  = _bitboards[OCCUPANCY].getData();  // all occupied squares
+    uint64_t empty      = ~occupancy;                       // all empty squares
 
-    // pawns
-    generatePawnMoves(moves, _bitboards[W_PAWNS + bitIndex], ~_bitboards[OCCUPANCY].getData(), _bitboards[enemyBoardIndex], _currentPlayer);
+    // PAWNS
+    generatePawnMoves(moves, _bitboards[W_PAWNS + offset], empty, _bitboards[enemyAllIndex], _currentPlayer);
 
-    // knights
-    generateKnightMoves(moves, _bitboards[W_KNIGHTS + bitIndex], ~_bitboards[OCCUPANCY].getData());
+    // KNIGHTS
+    BitboardElement knights = _bitboards[W_KNIGHTS + offset];
+    knights.forEachBit([&](int from) {
+        BitboardElement canMoveTo = _knightBitboards[from].getData() & ~friendlyBB;
+        canMoveTo.forEachBit([&](int to) {
+            moves.emplace_back(from, to, Knight);
+        });
+    });
 
-    // kings
-    uint64_t kingBoard = _bitboards[W_KING + bitIndex].getData();
-    while(kingBoard){
+    // KINGS
+    uint64_t kingBoard = _bitboards[W_KING + offset].getData();
+    while (kingBoard) {
         int sq = bitScanForward(kingBoard);
-        generateKingMoves(state.c_str(), moves, sq / 8, sq & 7);
-        kingBoard &= (kingBoard - 1);
+        generateKingMoves(state.c_str(), moves, sq / 8, sq % 8);
+        kingBoard &= kingBoard - 1;
+    }
+    // BISHOPS
+    uint64_t bishopBoard = _bitboards[W_BISHOPS + offset].getData();
+    while (bishopBoard) {
+        int sq = bitScanForward(bishopBoard);
+        generateBishopMoves(state.c_str(), moves, sq / 8, sq % 8);
+        bishopBoard &= bishopBoard - 1;
     }
 
-    // bishops
-    uint64_t bishopBoard = _bitboards[W_BISHOPS + bitIndex].getData();
-    while(bishopBoard){
-        int sq = bitScanForward(bishopBoard);
-        generateBishopMoves(state.c_str(), moves, sq / 8, sq & 7);
-        bishopBoard &= (bishopBoard - 1);
-    } 
-
-    // rooks
-    uint64_t rookBoard = _bitboards[W_ROOKS + bitIndex].getData();
-    while(rookBoard){
+    // ROOKS
+    uint64_t rookBoard = _bitboards[W_ROOKS + offset].getData();
+    while (rookBoard) {
         int sq = bitScanForward(rookBoard);
-        generateRookMoves(state.c_str(), moves, sq / 8, sq & 7);
-        rookBoard &= (rookBoard - 1);
-    } 
+        generateRookMoves(state.c_str(), moves, sq / 8, sq % 8);
+        rookBoard &= rookBoard - 1;
+    }
 
-    // queens
-    uint64_t queenBoard = _bitboards[W_QUEENS + bitIndex].getData();
-    while(queenBoard){
+    // QUEENS
+    uint64_t queenBoard = _bitboards[W_QUEENS + offset].getData();
+    while (queenBoard) {
         int sq = bitScanForward(queenBoard);
-        generateQueenMoves(state.c_str(), moves, sq / 8, sq & 7);
-        queenBoard &= (queenBoard - 1);
-    } 
+        generateQueenMoves(state.c_str(), moves, sq / 8, sq % 8);
+        queenBoard &= queenBoard - 1;
+    }
 
     return moves;
+}
+
+void Chess::rebuildBitboards(const std::string& state)
+{
+    for (int i = 0; i < e_numBitboards; i++) _bitboards[i] = 0;
+    for (int i = 0; i < 64; i++) {
+        char c = state[i];
+        int bbIdx = _bitboardLookup[(unsigned char)c];
+        _bitboards[bbIdx] |= 1ULL << i;
+        if (c != '0') {
+            _bitboards[OCCUPANCY] |= 1ULL << i;
+            _bitboards[isupper(c) ? W_ALL : B_ALL] |= 1ULL << i;
+        }
+    }
 }
 
 void Chess::generateKnightMoves(std::vector<BitMove>& moves, BitboardElement knights, uint64_t occupancy){
