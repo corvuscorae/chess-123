@@ -260,6 +260,11 @@ void Chess::setStateString(const std::string &s)
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
         int index = y * 8 + x;
         char playerNumber = s[index] - '0';
+
+        // destroy whatever is currently on the square first
+        //      (frees the old bit, prevent mem leaks)
+        square->destroyBit();
+        
         if (playerNumber) {
             square->setBit(PieceForPlayer(playerNumber - 1, Pawn));
         } else {
