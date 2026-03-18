@@ -150,32 +150,23 @@ bool Chess::actionForEmptyHolder(BitHolder &holder)
     return false;
 }
 
-bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src)
-{
-    // need to implement friendly/unfriendly in bit so for now this hack
-    int currentPlayer = getCurrentPlayer()->playerNumber() * 128;
-    int pieceColor = bit.gameTag() & 128;
-    if (pieceColor != currentPlayer) return false;
+bool Chess::canBitMoveFrom(Bit& bit, BitHolder& src){
+    bool pieceIsWhite = (bit.gameTag() & 128) == 0;
+    bool currentIsWhite = (_currentPlayer == WHITE);
+    if (pieceIsWhite != currentIsWhite) return false;
 
-    ChessSquare *square = (ChessSquare *)&src;
-    int squareIndex = square->getSquareIndex();
-    for(auto move : _moves){
-        if(move.from == squareIndex){
-            return true;
-        }
-    }
+    ChessSquare* square = static_cast<ChessSquare*>(&src);
+    int idx = square->getSquareIndex();
+    for (auto& m : _moves)
+        if (m.from == idx) return true;
     return false;
 }
 
-bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
-{
-    ChessSquare *srcSquare = (ChessSquare *)&src;
-    ChessSquare *dstSquare = (ChessSquare *)&dst;
-
-    int srcSquareIndex = srcSquare->getSquareIndex();
-    int dstSquareIndex = dstSquare->getSquareIndex();
-    for(auto move : _moves){
-        if(move.from == srcSquareIndex && move.to == dstSquareIndex){
+bool Chess::canBitMoveFromTo(Bit&, BitHolder& src, BitHolder& dst){
+    int srcSquareIndex = static_cast<ChessSquare*>(&src)->getSquareIndex();
+    int dstSquareIndex = static_cast<ChessSquare*>(&dst)->getSquareIndex();
+    for (auto& move : _moves){
+        if (move.from == srcSquareIndex && move.to == dstSquareIndex){ 
             return true;
         }
     }
