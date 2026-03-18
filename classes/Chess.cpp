@@ -427,7 +427,7 @@ void Chess::generateBishopMoves(const char* state, std::vector<BitMove>& moves, 
         {1,1}, {1, -1}, {-1, 1}, {-1, -1}
     };
 
-    generateLinearMoves(state, moves, row, col, diagonals);
+    generateLinearMoves(state, moves, row, col, diagonals, Bishop);
 }
 
 void Chess::generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col){
@@ -435,7 +435,7 @@ void Chess::generateRookMoves(const char* state, std::vector<BitMove>& moves, in
         {1,0}, {-1, 0}, {0, 1}, {0, -1}
     };
 
-    generateLinearMoves(state, moves, row, col, orthogonals);
+    generateLinearMoves(state, moves, row, col, orthogonals, Rook);
 }
 
 void Chess::generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col){
@@ -444,21 +444,21 @@ void Chess::generateQueenMoves(const char* state, std::vector<BitMove>& moves, i
         {1,1}, {1, -1}, {-1, 1}, {-1, -1}
     };
 
-    generateLinearMoves(state, moves, row, col, all_dirs);
+    generateLinearMoves(state, moves, row, col, all_dirs, Queen);
 }
 
-void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions){
+void Chess::generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions, ChessPiece pieceType){
     for( auto &dir : directions){
         int currRow = row + dir.first;
         int currCol = col + dir.second;
 
         while(currRow >= 0 && currRow < 8 && currCol >= 0 && currCol < 8){
             if(pieceNotation(currCol, currRow) != '0'){
-                addMoveIfValid(state, moves, row, col, currRow, currCol);
+                addMoveIfValid(state, moves, row, col, currRow, currCol, pieceType);
                 break;
             }
 
-            addMoveIfValid(state, moves, row, col, currRow, currCol);
+            addMoveIfValid(state, moves, row, col, currRow, currCol, pieceType);
             currRow += dir.first;
             currCol += dir.second;
         }
@@ -472,12 +472,12 @@ int Chess::stateColor(const char* state, int row, int col){
     return (piece < 'a') ? WHITE : BLACK;
 }
 
-void Chess::addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol){
+void Chess::addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol, ChessPiece pieceType){
     if(toRow >= 0 && toRow < 8 && toCol >= 0 && toCol < 8){
         int fromColor = stateColor(state, fromRow, fromCol);
         int toColor = stateColor(state, toRow, toCol);
         if(fromColor != toColor){
-            moves.emplace_back(fromRow*8+fromCol, toRow*8+toCol, Knight);
+            moves.emplace_back(fromRow*8+fromCol, toRow*8+toCol, pieceType);
         }
     }
 }
@@ -541,7 +541,7 @@ void Chess::generateKingMoves(const char *state, std::vector<BitMove> &moves, in
         int newCol = col + dir.second;
 
         if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8){
-            addMoveIfValid(state, moves, row, col, newRow, newCol);
+            addMoveIfValid(state, moves, row, col, newRow, newCol, King);
         }
     }
 }

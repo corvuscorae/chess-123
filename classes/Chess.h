@@ -66,7 +66,7 @@ private:
     void rebuildBitboards(const std::string& state);
     std::vector<BitMove> generatePseudoLegalMoves(const std::string& state);
     void bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst);
-    void addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol);
+    void addMoveIfValid(const char* state, std::vector<BitMove>& moves, int fromRow, int fromCol, int toRow, int toCol, ChessPiece pieceType);
 
 
     // knights
@@ -80,7 +80,7 @@ private:
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
-    void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions);
+    void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions, ChessPiece pieceType);
 
     // pawns
     void generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char col);
