@@ -105,4 +105,13 @@ private:
                 return __builtin_ffsll(bb) - 1;
         #endif
     };
+
+    // AI
+    bool gameHasAI() override { return true; }
+
+    void updateAI();
+    int negamax(const std::string& state, int depth, int alpha, int beta, int player);
+    void applyMoveToState(std::string& state, const BitMove& move) const;
+    int evaluateBoard(const char* state);
+
 };

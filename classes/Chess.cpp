@@ -1,4 +1,5 @@
 #include "Chess.h"
+#include "Evaluate.h"
 #include <limits>
 #include <cmath>
 
@@ -75,6 +76,11 @@ void Chess::setUpBoard()
 
     _currentPlayer = WHITE;
     _moves = generatePseudoLegalMoves(stateString());
+
+    if (gameHasAI()) {
+        setAIPlayer(AI_PLAYER);
+    }
+
     startGame();
 }
 
@@ -544,4 +550,144 @@ void Chess::generateKingMoves(const char *state, std::vector<BitMove> &moves, in
             addMoveIfValid(state, moves, row, col, newRow, newCol, King);
         }
     }
+}
+
+// AI
+// apply a move to state string
+void Chess::applyMoveToState(std::string& state, const BitMove& move) const {
+    int from = move.from, to = move.to;
+    char piece = state[from];
+
+    state[to]   = piece;
+    state[from] = '0';
+}
+
+int Chess::negamax(const std::string& state, int depth, int alpha, int beta, int player){
+    if (depth == 0) {
+        int val = evaluateBoard(state.c_str());
+        return (player == WHITE) ? val : -val;
+    }
+
+    // set search context so generators work
+    int savedPlayer     = _currentPlayer;
+    _currentPlayer      = player;
+    rebuildBitboards(state);
+
+    std::vector<BitMove> pseudo = generatePseudoLegalMoves(state);
+
+    // filter to legal (don't leave own king in check)
+    std::vector<BitMove> moves;
+    moves.reserve(pseudo.size());
+    int kingBBIndex = (player == WHITE) ? W_KING : B_KING;
+    int oppPlayer = (player == WHITE) ? BLACK : WHITE;
+    for (auto& move : pseudo) {
+        std::string next = state;
+        applyMoveToState(next, move);   // simulate move on state string
+
+        // enemy moves
+        _currentPlayer = oppPlayer;
+        rebuildBitboards(next);
+        std::vector<BitMove> oppMoves = generatePseudoLegalMoves(next);
+
+
+        _currentPlayer = player;
+        rebuildBitboards(next);
+
+        uint64_t kbb = _bitboards[kingBBIndex].getData();
+        if (!kbb) continue;
+
+        // check if king is in check
+        int kIndex = bitScanForward(kbb);
+        bool inCheck = false;
+        for (auto& om : oppMoves){ 
+            if (om.to == kIndex) { 
+                inCheck = true; 
+                break;                          // illegal move
+            }
+        }
+        
+        if (!inCheck) moves.push_back(move);    // legal move
+    }
+
+    // RESTORE
+    _currentPlayer = savedPlayer;
+
+    if (moves.empty()) {
+        _currentPlayer = oppPlayer;
+        rebuildBitboards(state);
+        std::vector<BitMove> attack = generatePseudoLegalMoves(state);
+
+        _currentPlayer = savedPlayer;
+        rebuildBitboards(state);
+        
+        // check if king in check
+        uint64_t kingBB = _bitboards[kingBBIndex].getData();
+        int king = kingBB ? bitScanForward(kingBB) : -1;
+        bool inCheck = false;
+        for (auto& atkMove : attack) {
+            if (atkMove.to == king) { 
+                inCheck = true; 
+                break;                          // BAD
+            }
+        }
+        
+        return inCheck ? (-100000 + depth) : 0; // punish king in check
+    }
+
+    int best = -200000;
+    for (auto& move : moves) {
+        std::string next = state;
+        applyMoveToState(next, move);
+
+        int score = -negamax(next, depth - 1, -beta, -alpha, oppPlayer);
+
+        // AB pruning
+        if (score > best)  best  = score;
+        if (score > alpha) alpha = score;
+        if (alpha >= beta) break;
+    }
+    return best;
+}
+
+void Chess::updateAI()
+{
+    constexpr int AI_DEPTH = 4;
+    constexpr int NEG_INF  = -200000;
+    constexpr int POS_INF  =  200000;
+
+    // snapshot
+    std::string rootState = stateString();
+    int         rootPlayer = _currentPlayer;
+
+    std::vector<BitMove> moves = generatePseudoLegalMoves(rootState);
+    if (moves.empty()) return;
+
+    int     bestScore = NEG_INF;
+    BitMove bestMove  = moves[0];
+    int     oppPlayer = (rootPlayer == WHITE) ? BLACK : WHITE;
+
+    for (auto& move : moves) {
+        std::string next = rootState;
+        applyMoveToState(next, move);
+
+        int score = -negamax(next, AI_DEPTH - 1, NEG_INF, POS_INF, oppPlayer);
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestMove  = move;
+        }
+    }
+
+    // RESTORE
+    _currentPlayer   = rootPlayer;
+    setStateString(rootState);
+
+    // APPLY BEST MOVE
+    applyMoveToState(rootState, bestMove);
+    setStateString(rootState);
+
+    _currentPlayer = (_currentPlayer == WHITE) ? BLACK : WHITE;
+    _moves         = generatePseudoLegalMoves(stateString());
+    clearBoardHighlights();
+    endTurn();
 }
