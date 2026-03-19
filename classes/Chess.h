@@ -80,7 +80,13 @@ private:
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
-    void generateLinearMoves(const char* state, std::vector<BitMove>& moves, int row, int col, const std::vector<std::pair<int, int>> directions, ChessPiece pieceType);
+void generateLinearMoves(const char* state, std::vector<BitMove>& moves,
+                                  int row, int col,
+                                  const std::pair<int,int>* directions, int numDirs,
+                                  ChessPiece pieceType);
+int getColorFromState(const char* state, int row, int col);
+
+void applyMoveToBoard(const BitMove& move);
 
     // pawns
     void generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char col);
@@ -113,5 +119,8 @@ private:
     int negamax(const std::string& state, int depth, int alpha, int beta, int player);
     void applyMoveToState(std::string& state, const BitMove& move) const;
     int evaluateBoard(const char* state);
+    std::vector<BitMove> generateLegalMoves();
+    bool isMoveLegal(const BitMove& move);
 
 };
+
