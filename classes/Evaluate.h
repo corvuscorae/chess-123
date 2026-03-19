@@ -71,7 +71,7 @@ static int materialValue(char piece) {
         case 'B': return  330;
         case 'R': return  500;
         case 'Q': return  900;
-        case 'K': return 20000;
+        case 'K': return  20000;
         case 'p': return -100;
         case 'n': return -320;
         case 'b': return -330;
@@ -89,14 +89,8 @@ int Chess::evaluateBoard(const char* state) {
         char piece = state[i];
         if (piece == '0') continue;
 
-        // ── Material ──────────────────────────────────────────
         score += materialValue(piece);
 
-        // ── Piece-square table bonus ──────────────────────────
-        // j = index into the PST table.
-        // White pieces look up [i] directly (a1-centric).
-        // Black pieces mirror vertically via FLIP so that
-        // "advancing toward the opponent" still means higher bonus.
         int j = isupper(piece) ? i : FLIP(i);
         int sign = isupper(piece) ? 1 : -1;
 
