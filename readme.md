@@ -10,3 +10,14 @@ Full disclosure: last week, I had playtests in 171, so I didn't have a lot of ba
 
 ![Initial moves for pawns, knights, and kings totaling to 20](./docs/pawnsknightkings_initmoves.png)
 ![Bishops, rooks, queens too](./docs/bishopsrooksqueens.png)
+
+**AI**
+The AI uses negamax search implemented in `Chess::negamax()`. At each node, the algorithm generates all pseudo-legal moves, filters to legal moves (that don't leave the king in check), and recursively evaluates the resulting positions. AB pruning is applied to cut off branches that cant improve on the current best score.
+
+- runs at a default depth of 4 
+- eval function is implemented in `Evaluate.h` using piece square tables provided in class. It scores the board based on material balance using piece values
+- plays better than random: consistently beats me, a chess novice who basically moves pieces at random
+
+**future fixes**
+- improve filtering the pseudo legal moves to legal moves bottleneck
+- add en passant, castling, and pawn promotion

@@ -1,3 +1,4 @@
+// provide by Graeme Devine
 #pragma once
 #include "Chess.h"
 
