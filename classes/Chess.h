@@ -71,8 +71,6 @@ private:
 
     // knights
     BitboardElement generateKnightMoveBitboard(int square);
-    void generateKnightMoves(std::vector<BitMove>& moves, std::string &state);
-    void generateKnightMoves(std::vector<BitMove>& moves, BitboardElement knights, uint64_t occupancy);
 
     // bishops
     // TODO: improve
@@ -80,13 +78,10 @@ private:
     void generateBishopMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateRookMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
     void generateQueenMoves(const char* state, std::vector<BitMove>& moves, int row, int col);
-void generateLinearMoves(const char* state, std::vector<BitMove>& moves,
-                                  int row, int col,
-                                  const std::pair<int,int>* directions, int numDirs,
-                                  ChessPiece pieceType);
-int getColorFromState(const char* state, int row, int col);
-
-void applyMoveToBoard(const BitMove& move);
+    void generateLinearMoves(const char* state, std::vector<BitMove>& moves,
+                                    int row, int col,
+                                    const std::pair<int,int>* directions, int numDirs,
+                                    ChessPiece pieceType);
 
     // pawns
     void generatePawnMoves(std::vector<BitMove>& moves, BitboardElement pawns, const BitboardElement empty, const BitboardElement enemies, char col);
@@ -121,6 +116,9 @@ void applyMoveToBoard(const BitMove& move);
     int evaluateBoard(const char* state);
     std::vector<BitMove> generateLegalMoves();
     bool isMoveLegal(const BitMove& move);
+
+    int getColorFromState(const char* state, int row, int col);
+    void applyMoveToBoard(const BitMove& move);
 
 };
 
